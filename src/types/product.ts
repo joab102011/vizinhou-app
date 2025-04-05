@@ -1,20 +1,21 @@
+import { Timestamp } from 'firebase/firestore';
+
 export interface Product {
   id: string;
   title: string;
   description: string;
   price: number;
-  imageUrl?: string;
+  images: string[];
   category: string;
   condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-  swap: boolean;
   userId: string;
   userName: string;
-  userPhotoURL?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  location?: {
-    latitude: number;
-    longitude: number;
-    address?: string;
-  };
+  userPhoto?: string;
+  location: string;
+  condominiumId: string;
+  condominiumName: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  isSwappable: boolean;
+  status: 'active' | 'sold' | 'reserved';
 } 

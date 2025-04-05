@@ -1,193 +1,188 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { doc, getDoc, DocumentSnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Product } from '@/types/product';
-import { useAuth } from '@/contexts/AuthContext';
-import { formatCurrency, formatDateTime } from '@/utils/format';
-import ChatWindow from '@/components/Chat/ChatWindow';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { FiArrowLeft, FiTag, FiMapPin, FiUser, FiClock, FiMessageSquare } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
+import ChatModal from '@/components/Chat/ChatModal';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import toast from 'react-hot-toast';
 
-const conditions = [
-  { value: 'new', label: 'Novo' },
-  { value: 'like_new', label: 'Como novo' },
-  { value: 'good', label: 'Bom' },
-  { value: 'fair', label: 'Regular' },
-  { value: 'poor', label: 'Ruim' },
-] as const;
+// Dados de exemplo para o produto
+const productData = {
+  id: '1',
+  title: 'Produto em Destaque',
+  description: 'Descrição detalhada do produto em destaque. Este é um produto de alta qualidade com várias características interessantes.',
+  price: 'R$ 299,90',
+  category: 'Eletrônicos',
+  location: 'São Paulo, SP',
+  seller: 'João Silva',
+  publishedAt: 'Publicado há 2 dias',
+  condition: 'Novo',
+  whatsapp: '5511999999999', // Número do WhatsApp do vendedor
+  images: [
+    '/images/placeholder-product.jpg',
+    '/images/placeholder-product.jpg',
+    '/images/placeholder-product.jpg'
+  ]
+};
 
-export default function ProductPage() {
-  const { id } = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showChat, setShowChat] = useState(false);
-  const { user } = useAuth();
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
+  const [activeImage, setActiveImage] = useState(0);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [product] = useState(productData);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
+  // Verifica autenticação
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const productRef = doc(db, 'products', id as string);
-        const productDoc = await getDoc(productRef);
-
-        if (productDoc.exists()) {
-          setProduct({
-            id: productDoc.id,
-            ...productDoc.data(),
-            createdAt: productDoc.data().createdAt?.toDate(),
-            updatedAt: productDoc.data().updatedAt?.toDate(),
-          } as Product);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar produto:', error);
-      } finally {
-        setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoading(false);
+      if (!user) {
+        toast.error('Você precisa estar logado para acessar esta página');
+        router.push('/login');
       }
-    };
+    });
 
-    if (id) {
-      fetchProduct();
+    return () => unsubscribe();
+  }, [router]);
+
+  // Simula carregamento do produto pelo ID
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('Carregando produto com ID:', params.id);
     }
-  }, [id]);
+  }, [params.id, isLoading]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="bg-gray-200 h-96 rounded-lg mb-8" />
-          <div className="space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-3/4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-            <div className="h-4 bg-gray-200 rounded w-full" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleWhatsAppClick = () => {
+    const message = `Olá! Tenho interesse no produto ${product.title}.`;
+    const whatsappUrl = `https://wa.me/${product.whatsapp}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
-  if (!product) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Produto não encontrado
-          </h1>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Botão Voltar */}
+      <Link href="/produtos" className="inline-flex items-center text-gray-600 hover:text-primary mb-6">
+        <div className="mr-2">
+          <FiArrowLeft size={20} />
+        </div>
+        <span>Voltar para produtos</span>
+      </Link>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Imagem do Produto */}
-        <div>
-          <img
-            src={product.imageUrl || '/placeholder.png'}
-            alt={product.title}
-            className="w-full h-96 object-cover rounded-lg"
-          />
+        {/* Galeria de Imagens */}
+        <div className="space-y-4">
+          <div className="aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
+            <img
+              src={product.images[activeImage]}
+              alt={product.title}
+              className="object-cover w-full h-full"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {product.images.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveImage(index)}
+                className={`aspect-w-16 aspect-h-9 rounded-lg overflow-hidden ${
+                  activeImage === index ? 'ring-2 ring-primary' : ''
+                }`}
+              >
+                <img
+                  src={image}
+                  alt={`${product.title} - ${index + 1}`}
+                  className="object-cover w-full h-full"
+                />
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Detalhes do Produto */}
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{product.title}</h1>
-            <p className="text-2xl font-bold text-primary-600 mt-2">
-              {formatCurrency(product.price)}
-            </p>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <img
-              src={product.userPhotoURL || '/avatar-placeholder.png'}
-              alt={product.userName}
-              className="w-12 h-12 rounded-full"
-            />
-            <div>
-              <p className="font-medium">{product.userName}</p>
-              <p className="text-sm text-gray-500">
-                Publicado em {formatDateTime(product.createdAt)}
-              </p>
+        {/* Informações do Produto */}
+        <div className="bg-white/80 backdrop-blur-md p-6 rounded-lg shadow-lg">
+          <h1 className="text-3xl font-bold mb-2 text-gray-900">{product.title}</h1>
+          <p className="text-2xl text-primary font-bold mb-4">{product.price}</p>
+          
+          <div className="flex items-center text-gray-800 mb-2">
+            <div className="mr-2">
+              <FiTag size={20} />
             </div>
+            <span>{product.category}</span>
           </div>
-
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Descrição</h2>
-            <p className="text-gray-600 whitespace-pre-line">
-              {product.description}
-            </p>
+          
+          <div className="flex items-center text-gray-800 mb-2">
+            <div className="mr-2">
+              <FiMapPin size={20} />
+            </div>
+            <span>{product.location}</span>
           </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <span className="font-medium w-24">Categoria:</span>
-              <span className="text-gray-600">{product.category}</span>
+          
+          <div className="flex items-center text-gray-800 mb-2">
+            <div className="mr-2">
+              <FiUser size={20} />
             </div>
-            <div className="flex items-center">
-              <span className="font-medium w-24">Condição:</span>
-              <span className="text-gray-600">
-                {
-                  conditions.find((c) => c.value === product.condition)?.label ||
-                  product.condition
-                }
-              </span>
+            <span>{product.seller}</span>
+          </div>
+          
+          <div className="flex items-center text-gray-800 mb-6">
+            <div className="mr-2">
+              <FiClock size={20} />
             </div>
-            {product.swap && (
-              <div className="flex items-center">
-                <span className="font-medium w-24">Troca:</span>
-                <span className="text-blue-600">Aceita troca</span>
+            <span>{product.publishedAt}</span>
+          </div>
+          
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2 text-gray-900">Descrição</h2>
+            <p className="text-gray-900 font-medium leading-relaxed bg-white/50 p-3 rounded-lg">{product.description}</p>
+          </div>
+          
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2 text-gray-900">Condição</h2>
+            <p className="text-gray-900 font-medium bg-white/50 p-3 rounded-lg">{product.condition}</p>
+          </div>
+          
+          <div className="space-y-3">
+            <button 
+              onClick={() => setShowChatModal(true)}
+              className="w-full bg-red-600/90 text-white py-3 px-4 rounded-lg flex items-center justify-center hover:bg-red-700/90 transition-colors shadow-md"
+            >
+              <div className="mr-2">
+                <FiMessageSquare size={20} />
               </div>
-            )}
-          </div>
+              <span>Iniciar Conversa com o Vendedor</span>
+            </button>
 
-          {user && user.uid !== product.userId && (
-            <div className="pt-6 border-t">
-              <button
-                onClick={() => setShowChat(true)}
-                className="w-full btn-primary"
-              >
-                Conversar com o Vendedor
-              </button>
-            </div>
-          )}
+            <button 
+              onClick={handleWhatsAppClick}
+              className="w-full bg-green-600/90 text-white py-3 px-4 rounded-lg flex items-center justify-center hover:bg-green-700/90 transition-colors shadow-md"
+            >
+              <div className="mr-2">
+                <FaWhatsapp size={20} />
+              </div>
+              <span>Conversar no WhatsApp</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Chat */}
-      {showChat && user && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Chat</h2>
-              <button
-                onClick={() => setShowChat(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <ChatWindow
-              productId={product.id}
-              receiverId={product.userId}
-              receiverName={product.userName}
-              receiverPhotoURL={product.userPhotoURL}
-            />
-          </div>
-        </div>
-      )}
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        productTitle={product.title}
+        sellerName={product.seller}
+      />
     </div>
   );
 } 

@@ -5,13 +5,13 @@ import { getStorage } from 'firebase/storage';
 import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
-  // Substitua com suas configurações do Firebase
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCmseOVuyw6cji9Kw27lJBDmdOPgL5wXQs",
+  authDomain: "vizinhou-8eeaa.firebaseapp.com",
+  projectId: "vizinhou-8eeaa",
+  storageBucket: "vizinhou-8eeaa.firebasestorage.app",
+  messagingSenderId: "509179466890",
+  appId: "1:509179466890:web:8b1156275aa5677a158973",
+  measurementId: "G-K5E6KFNS45"
 };
 
 let app: FirebaseApp;

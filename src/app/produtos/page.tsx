@@ -1,184 +1,112 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Product } from '@/types/product';
-import ProductCard from '@/components/Product/ProductCard';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { FiSearch, FiMapPin, FiTag } from 'react-icons/fi';
 
-const categories = [
-  'Eletrônicos',
-  'Móveis',
-  'Roupas',
-  'Livros',
-  'Esportes',
-  'Casa',
-  'Outros',
-];
-
-const conditions = [
-  { value: 'new', label: 'Novo' },
-  { value: 'like_new', label: 'Como novo' },
-  { value: 'good', label: 'Bom' },
-  { value: 'fair', label: 'Regular' },
-  { value: 'poor', label: 'Ruim' },
+// Dados de exemplo para os produtos
+const productElements = [
+  {
+    id: '1',
+    title: 'Produto em Destaque 1',
+    price: 'R$ 299,90',
+    category: 'Categoria 1',
+    location: 'São Paulo, SP',
+    imageUrl: '/images/placeholder-product.jpg'
+  },
+  {
+    id: '2',
+    title: 'Produto em Destaque 2',
+    price: 'R$ 199,90',
+    category: 'Categoria 2',
+    location: 'Rio de Janeiro, RJ',
+    imageUrl: '/images/placeholder-product.jpg'
+  },
+  {
+    id: '3',
+    title: 'Produto em Destaque 3',
+    price: 'R$ 399,90',
+    category: 'Categoria 3',
+    location: 'Belo Horizonte, MG',
+    imageUrl: '/images/placeholder-product.jpg'
+  }
 ];
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedCondition, setSelectedCondition] = useState<string>('');
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
-    min: 0,
-    max: 1000000,
-  });
-  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showEmptyFeedback, setShowEmptyFeedback] = useState(false);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const productsRef = collection(db, 'products');
-        let q = query(productsRef, where('status', '==', 'active'));
-
-        if (selectedCategory) {
-          q = query(q, where('category', '==', selectedCategory));
-        }
-
-        if (selectedCondition) {
-          q = query(q, where('condition', '==', selectedCondition));
-        }
-
-        q = query(q, orderBy('createdAt', 'desc'));
-
-        const snapshot = await getDocs(q);
-        const productsList = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-            updatedAt: doc.data().updatedAt?.toDate(),
-          }))
-          .filter(
-            (product) =>
-              product.price >= priceRange.min && product.price <= priceRange.max
-          ) as Product[];
-
-        setProducts(productsList);
-      } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [selectedCategory, selectedCondition, priceRange]);
-
-  if (loading) {
+  // Filtra os produtos com base na pesquisa
+  const filteredProducts = productElements.filter(product => {
+    const searchLower = searchQuery.toLowerCase();
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-gray-200 animate-pulse rounded-lg h-64"
-            />
-          ))}
-        </div>
-      </div>
+      product.title.toLowerCase().includes(searchLower) ||
+      product.category.toLowerCase().includes(searchLower) ||
+      product.location.toLowerCase().includes(searchLower)
     );
-  }
+  });
+
+  // Atualiza o feedback quando não há resultados
+  useEffect(() => {
+    setShowEmptyFeedback(searchQuery !== '' && filteredProducts.length === 0);
+  }, [searchQuery, filteredProducts.length]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Filtros */}
-        <div className="w-full md:w-64 space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Categorias</h3>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input"
-            >
-              <option value="">Todas</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+      {/* Barra de Pesquisa */}
+      <div className="mb-8">
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <FiSearch size={20} />
           </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Condição</h3>
-            <select
-              value={selectedCondition}
-              onChange={(e) => setSelectedCondition(e.target.value)}
-              className="input"
-            >
-              <option value="">Todas</option>
-              {conditions.map((condition) => (
-                <option key={condition.value} value={condition.value}>
-                  {condition.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Preço</h3>
-            <div className="space-y-2">
-              <input
-                type="number"
-                placeholder="Mínimo"
-                value={priceRange.min}
-                onChange={(e) =>
-                  setPriceRange((prev) => ({
-                    ...prev,
-                    min: Number(e.target.value),
-                  }))
-                }
-                className="input"
-              />
-              <input
-                type="number"
-                placeholder="Máximo"
-                value={priceRange.max}
-                onChange={(e) =>
-                  setPriceRange((prev) => ({
-                    ...prev,
-                    max: Number(e.target.value),
-                  }))
-                }
-                className="input"
-              />
-            </div>
-          </div>
+          <input
+            type="text"
+            placeholder="Buscar produtos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
+      </div>
 
-        {/* Lista de Produtos */}
-        <div className="flex-1">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold">
-              {products.length} Produtos Encontrados
-            </h2>
-          </div>
-
-          {products.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Nenhum produto encontrado</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+      {/* Feedback quando não há resultados */}
+      {showEmptyFeedback && (
+        <div className="text-center py-8">
+          <p className="text-gray-600">
+            Nenhum produto encontrado para "{searchQuery}"
+          </p>
         </div>
+      )}
+
+      {/* Lista de Produtos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.map((product) => (
+          <Link 
+            href={`/produtos/${product.id}`} 
+            key={product.id}
+            className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="aspect-w-16 aspect-h-9 bg-gray-200 rounded-t-lg flex items-center justify-center">
+              <div className="text-gray-400 text-6xl">🖼️</div>
+            </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
+              <p className="text-primary font-bold mb-2">{product.price}</p>
+              <div className="flex items-center text-gray-600 text-sm mb-1">
+                <div className="mr-1">
+                  <FiTag size={16} />
+                </div>
+                <span>{product.category}</span>
+              </div>
+              <div className="flex items-center text-gray-600 text-sm">
+                <div className="mr-1">
+                  <FiMapPin size={16} />
+                </div>
+                <span>{product.location}</span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

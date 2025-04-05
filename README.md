@@ -42,6 +42,23 @@ npm install
 npm run dev
 ```
 
+## Configuração do Assistente Virtual (ChatGPT)
+
+Para utilizar o assistente virtual, você precisa:
+
+1. Criar uma conta na [OpenAI](https://platform.openai.com/signup)
+2. Gerar uma chave de API no [painel da OpenAI](https://platform.openai.com/api-keys)
+3. Copiar a chave e adicionar ao arquivo `.env.local`:
+```
+OPENAI_API_KEY=sua_chave_api_aqui
+```
+
+O assistente virtual ajudará os usuários com:
+- Dúvidas sobre compras e vendas
+- Informações sobre o funcionamento do app
+- Suporte para trocas e negociações
+- Dicas de uso da plataforma
+
 ## Estrutura do Projeto
 
 ```

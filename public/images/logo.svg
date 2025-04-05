@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="white"/>
+  <g transform="translate(100, 100) scale(0.8)">
+    <path d="M150 50 L650 50 L650 450 L150 450 Z" fill="white"/>
+    <path d="M200 100 h400 v300 h-400 Z M250 150 v200 h300 v-200 Z" fill="#dc2626"/>
+    <path d="M300 200 h200 v100 h-200 Z" fill="white"/>
+  </g>
+  <!-- Texto -->
+  <text x="100" y="160" font-family="Arial" font-size="24" font-weight="bold" fill="#DC2626" text-anchor="middle">vizinhou</text>
+</svg> 

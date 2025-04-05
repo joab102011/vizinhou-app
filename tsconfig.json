@@ -14,7 +14,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
@@ -22,30 +21,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/@firebase",
-      "./src/types"
-    ],
-    "types": [
-      "node",
-      "react",
-      "react-dom",
-      "next",
-      "@firebase/app-types",
-      "@firebase/auth-types",
-      "@firebase/firestore-types",
-      "@firebase/messaging-types",
-      "@firebase/storage-types"
-    ]
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/types/**/*.d.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 } 
