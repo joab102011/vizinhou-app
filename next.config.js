@@ -2,11 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    forceSwcTransforms: true
-  },
   images: {
-    domains: ['firebasestorage.googleapis.com', 'www.svgrepo.com'],
+    domains: ['firebasestorage.googleapis.com', 'lh3.googleusercontent.com'],
   },
   webpack: (config) => {
     config.resolve.fallback = {
@@ -17,6 +14,9 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  experimental: {
+    serverActions: true,
   },
 }
 
